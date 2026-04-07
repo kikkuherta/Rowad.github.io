@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كشوف — إدارة الفصل الذكي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles-full.css">
+<style>
+  /* Premium Game Launcher */
+  .game-launcher { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+  .game-card {
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px; padding: 20px 16px; cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+    text-align: center; min-height: 160px; position: relative; overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03), inset 0 0 0 1px rgba(255,255,255,0.5);
+  }
+  .game-card::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+    opacity: 0; transition: opacity 0.4s; pointer-events: none;
+  }
+  .game-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 5px 15px rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); }
+  .game-card:hover::before { opacity: 1; }
+  .game-card .game-icon {
+    width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: #fff;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+    transition: all 0.3s ease; position: relative; z-index: 1;
+  }
+  .game-card:hover .game-icon { transform: scale(1.1) rotate(5deg); box-shadow: 0 12px 25px rgba(59,130,246,0.4); }
+  .game-card:nth-child(1) .game-icon { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 8px 20px rgba(245,158,11,0.3); }
+  .game-card:nth-child(2) .game-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+  .game-card:nth-child(3) .game-icon { background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 8px 20px rgba(99,102,241,0.3); }
+  .game-card:nth-child(4) .game-icon { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 8px 20px rgba(239,68,68,0.3); }
+  .game-card:nth-child(5) .game-icon { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 8px 20px rgba(139,92,246,0.3); }
+  
+  .game-card .game-title { font-weight: 700; color: #1e293b; font-size: 15px; position: relative; z-index: 1; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+  .game-card .game-desc { font-size: 12.5px; color: #64748b; line-height: 1.5; position: relative; z-index: 1; }
+
+  /* Premium Game Screen */
+  .game-modal .modal-body { min-height: 350px; display: flex; flex-direction: column; gap: 20px; }
+  .game-screen {
+    min-height: 300px; position: relative; border-radius: 16px;
+    background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); overflow: hidden;
+  }
+
+  /* Wheel */
+  .wheel-wrapper { position: relative; width: 280px; height: 280px; }
+  .wheel {
+    position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 0 0 0 6px #ffffff, inset 0 0 0 12px #e2e8f0;
+    transition: transform 5s cubic-bezier(0.2, 0.8, 0.1, 1);
+    background: #fff; border: 4px solid #cbd5e1;
+  }
+  .wheel-segment { position: absolute; top: 50%; left: 50%; width: 50%; height: 50%; transform-origin: left center; overflow: hidden; }
+  .wheel-segment .segment-fill { position: absolute; top: 0; left: 0; width: 200%; height: 200%; border-radius: 50%; transform-origin: left center; }
+  .wheel-segment span {
+    position: absolute; left: 55%; top: 50%; transform-origin: left center; transform: rotate(90deg) translateX(-50%) translateY(-50%);
+    width: 90%; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.4); text-align: right; padding-right: 15px;
+  }
+  .wheel-pointer {
+    position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0;
+    border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 25px solid #ef4444;
+    filter: drop-shadow(0 4px 6px rgba(220,38,38,0.4)); z-index: 2;
+  }
+  .wheel-pointer::after {
+    content:''; position:absolute; top:25px; left:-15px; width:30px; height:6px; background:#ef4444; border-radius:3px;
+  }
+  .wheel-center {
+    position: absolute; top: 50%; left: 50%; width: 75px; height: 75px;
+    background: radial-gradient(circle, #ffffff, #f1f5f9); border: 4px solid #cbd5e1;
+    border-radius: 50%; transform: translate(-50%, -50%);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15), inset 0 -3px 5px rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: center;
+    color: #1e293b; font-size: 16px; font-weight: 800; z-index: 2; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .wheel-center:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+  .wheel-center:active { transform: translate(-50%, -50%) scale(0.95); }
+
+  @keyframes tremble { 0% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(2px); } 100% { transform: translateX(-50%) translateY(0); } }
+  .wheel.spinning ~ .wheel-pointer { animation: tremble 0.1s infinite; filter: drop-shadow(0 0 10px rgba(220,38,38,0.8)); }
+
+  /* Confetti */
+  .confetti-piece { position: absolute; width: 10px; height: 20px; opacity: 0; pointer-events: none; border-radius: 2px; z-index:100; }
+  .confetti-piece.show { animation: confettiAnim 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  @keyframes confettiAnim { 0% { opacity: 1; transform: translateY(-50px) rotate(0deg) scale(1); } 100% { opacity: 0; transform: translateY(250px) rotate(720deg) scale(0.5); } }
+
+  /* Treasure Cards */
+  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px; width: 100%; }
+  .card-item { perspective: 1000px; cursor: pointer; height: 140px; }
+  .card-inner { position: relative; width: 100%; height: 100%; border-radius: 12px; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1); transform-style: preserve-3d; }
+  .card-item.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; background-size: cover; background-position: center; }
+  .card-front {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 2px solid #334155; color: #fff; font-size: 32px; font-weight: 800;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2), inset 0 0 0 4px rgba(255,255,255,0.05); text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 20px);
+  }
+  .card-back {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 2px solid #34d399; color: #fff; transform: rotateY(180deg);
+    padding: 10px; text-align: center; font-size: 16px; font-weight: 700; line-height: 1.4;
+    box-shadow: 0 0 30px rgba(16,185,129,0.5), inset 0 0 0 2px rgba(255,255,255,0.2);
+  }
+  .card-item.dimmed .card-inner { opacity: 0.5; transform: scale(0.95) rotateY(180deg) !important; filter: grayscale(80%); }
+
+  /* Scratch Card */
+  .scratch-card { 
+    position: relative; width: 85%; height: 200px; border-radius: 20px; overflow: hidden; 
+    background: radial-gradient(circle, #facc15, #f59e0b); 
+    color: #fff; display: flex; align-items: center; justify-content: center; 
+    box-shadow: 0 10px 25px rgba(245,158,11,0.3); border: 4px solid #fff;
+  }
+  .scratch-name { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; z-index: 1; font-size: 28px; font-weight: 900; color: #78350f; text-shadow: 0 2px 4px rgba(255,255,255,0.5); }
+  .scratch-canvas { position: absolute; inset: 0; z-index: 2; cursor: pointer; transition: opacity 0.5s ease; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3)); }
+
+  /* Quick Draw */
+  .quick-draw-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; height: 100%; width: 100%; }
+  .quick-output {
+    min-height: 90px; width: 80%; border-radius: 16px; 
+    background: linear-gradient(to bottom, #1e293b, #0f172a);
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 28px; font-weight: 800; color: #fff; padding: 12px; 
+    border: 3px solid #334155; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 2px 10px rgba(0,0,0,0.5); 
+    position: relative; overflow: hidden;
+  }
+  .quick-output::after {
+    content:''; position:absolute; top:0; left:-100%; width:50%; height:100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    transform: skewX(-20deg);
+  }
+  .quick-output.animating::after { animation: shine 1s infinite linear; }
+  .quick-output.winner-highlight {
+    background: linear-gradient(to bottom, #10b981, #059669);
+    border-color: #34d399; box-shadow: 0 0 40px rgba(16,185,129,0.6), inset 0 2px 10px rgba(0,0,0,0.2);
+    text-shadow: 0 2px 5px rgba(0,0,0,0.3); transform: scale(1.05); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+  @keyframes shine { 0% { left: -100%; } 100% { left: 200%; } }
+  
+  .quick-draw-btn {
+    width: 220px; height: 60px; border-radius: 30px; 
+    background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-size: 18px; font-weight: 700; 
+    cursor: pointer; box-shadow: 0 8px 20px rgba(59,130,246,0.4), inset 0 -3px 0 rgba(0,0,0,0.2); 
+    transition: all 0.2s ease; position: relative; overflow: hidden;
+  }
+  .quick-draw-btn:hover:not([disabled]) { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(59,130,246,0.5), inset 0 -3px 0 rgba(0,0,0,0.2); }
+  .quick-draw-btn:active:not([disabled]) { transform: translateY(2px); box-shadow: 0 2px 10px rgba(59,130,246,0.4), inset 0 0 0 rgba(0,0,0,0); }
+  .quick-draw-btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+  /* Fast Train Pick */
+  .train-wrapper { position: relative; width: 100%; overflow: hidden; padding: 20px 0; border-radius: 16px; background: linear-gradient(to bottom, #e0f2fe, #bae6fd); }
+  .train-track {
+    position: relative; height: 120px; background: #64748b; border-radius: 20px; 
+    border-bottom: 6px solid #475569; overflow: hidden; box-shadow: inset 0 10px 20px rgba(0,0,0,0.2);
+  }
+  .train-track::after {
+    content:''; position:absolute; bottom: 10px; width:200%; height:5px;
+    background: repeating-linear-gradient(90deg, #94a3b8, #94a3b8 10px, transparent 10px, transparent 20px);
+    z-index: 1; opacity: 0.3;
+  }
+  .train { position: absolute; top: 15px; left: 0; display: flex; align-items: flex-end; gap: 8px; z-index: 2; }
+  .engine {
+    width: 110px; height: 85px; border-radius: 20px 30px 10px 10px; 
+    background: linear-gradient(135deg, #dc2626, #991b1b); 
+    color: #fff; display: flex; align-items: center; justify-content: center; font-size: 32px; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 2px solid #7f1d1d; position: relative;
+  }
+  .engine::before { content:'💨'; position:absolute; top:-25px; right:10px; font-size:20px; opacity:0; }
+  .train.moving .engine::before { animation: smoke 1s infinite linear; }
+  @keyframes smoke { 0% { transform: translateY(0) scale(1); opacity:0.8; } 100% { transform: translateY(-30px) scale(1.5); opacity:0; } }
+  
+  .wagon {
+    min-width: 100px; height: 70px; border-radius: 12px; 
+    background: linear-gradient(to bottom, #ffffff, #f1f5f9); 
+    display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; 
+    font-size: 13px; font-weight: 700; color: #334155; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 2px solid #cbd5e1; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+  .wagon.selected {
+    background: linear-gradient(135deg, #10b981, #059669); color: #fff; 
+    box-shadow: 0 0 30px rgba(16,185,129,0.6); transform: scale(1.15) translateY(-5px); border-color: #34d399; z-index: 3;
+  }
+  .wagon:not(.selected).dimmed { opacity: 0.5; filter: grayscale(50%); transform: scale(0.95); }
+  .train-indicator {
+    position: absolute; top: -5px; left: calc(50% - 15px); width: 0; height: 0;
+    border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #facc15;
+    z-index: 4; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+
+  /* Game Result Box */
+  .game-result {
+    font-size: 18px; font-weight: 700; color: #1e293b; text-align: center; padding: 14px; 
+    border-radius: 16px; background: linear-gradient(to right, #f8fafc, #f1f5f9, #f8fafc); 
+    border: 1px solid #e2e8f0; margin-top: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: all 0.3s;
+  }
+  .game-result.loading {
+    background: linear-gradient(to right, #fffbeb, #fef3c7, #fffbeb); color: #b45309; 
+    animation: pulse 1.5s ease-in-out infinite; border-color: #fde68a;
+  }
+  .game-result.winner {
+    background: linear-gradient(to right, #ecfdf5, #d1fae5, #ecfdf5); color: #065f46;
+    border-color: #a7f3d0; box-shadow: 0 4px 15px rgba(16,185,129,0.1); transform: scale(1.02);
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  .game-actions .tb-btn { font-size: 15px; padding: 10px 20px; border-radius: 8px; }
+  .game-actions .tb-btn.primary { background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.3); color:#fff; }
+  .game-actions .tb-btn.primary:hover:not([disabled]) { box-shadow: 0 6px 16px rgba(37,99,235,0.4); transform: translateY(-1px); }
+</style>
+</head>
+<body>
+
+<!-- Modern Premium Login -->
+<div id="login-screen" class="login-screen">
+  <div class="login-container">
+    <div class="login-header">
+      <div style="font-weight:700; color:var(--gray-800); text-align:right; font-size:13px; line-height:1.4;">المملكة العربية السعودية<br/>وزارة التعليم</div>
+      <div class="ministry-logo"><svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="var(--primary)"/><path d="M12 22s2-6 8-6 8 6 8 6M17 12l2-4m2 4l-2-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>
+    </div>
+    
+    <div class="login-body">
+      <!-- Left Carousel (Info pane) -->
+      <div class="login-left-pane">
+        <div class="login-carousel-wrapper">
+          <div class="l-slide">
+            <div class="svg-graphic">
+               <svg viewBox="0 0 120 120">
+                 <circle cx="60" cy="60" r="50" fill="#dcfce7"/>
+                 <circle cx="60" cy="60" r="40" fill="#bbf7d0"/>
+                 <path d="M40 70v-10c0-11 9-20 20-20s20 9 20 20v10M35 70h50v20c0 5-4 10-10 10H45c-6 0-10-5-10-10V70z" fill="#166534"/>
+                 <circle cx="60" cy="50" r="12" fill="#fff"/>
+               </svg>
+            </div>
+            <h3>الدعم الفني</h3>
+            <p>هل تواجه أي مشكلة في النظام؟<br/>فريق الدعم متاح على مدار الساعة للإجابة على استفساراتك.</p>
+          </div>
+        </div>
+        <!-- Ornamental dots replicating background mesh -->
+        <div class="ornament-dots"></div>
+      </div>
+      
+      <!-- Right Form -->
+      <div class="login-right-pane">
+         <h2 style="text-align:center;color:var(--gray-800);font-size:24px;margin-bottom:35px;font-weight:800;">تسجيل الدخول</h2>
+         
+         <div class="floating-input-group">
+            <input type="text" id="login-username" class="floating-input" placeholder=" " required autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('login-password').focus()">
+            <label class="floating-label">اسم المستخدم</label>
+         </div>
+         
+         <div class="floating-input-group" style="margin-top:24px;">
+            <input type="password" id="login-password" class="floating-input" placeholder=" " required autocomplete="off" onkeydown="if(event.key==='Enter') performLogin()">
+            <label class="floating-label">كلمة المرور</label>
+         </div>
+         
+         <button class="login-btn" id="login-btn" onclick="performLogin()" style="margin-top:40px;">
+            <span class="btn-text">تسجيل الدخول</span>
+            <span class="btn-spinner" style="display:none;">
+              <svg class="spin-svg" viewBox="0 0 24 24"><circle class="path" cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="4"></circle></svg>
+            </span>
+         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" id="mobile-overlay" onclick="document.getElementById('sidebar').classList.remove('open'); this.classList.remove('active');"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+    </div>
+    <div class="logo-text">
+      <h1>كشوف</h1>
+      <p>نظام إدارة الفصل</p>
+    </div>
+  </div>
+
+  <div class="sidebar-section">القائمة الرئيسية</div>
+  <div class="nav-item active" onclick="showView('dashboard')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    لوحة التحكم
+  </div>
+  <div class="nav-item" onclick="showView('attendance')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    قائمة الطلاب
+  </div>
+  <div class="nav-item" onclick="showView('grades')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    التقييمات والدرجات
+  </div>
+  <div class="nav-item" onclick="showView('classes')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    الفصول والطلاب
+  </div>
+
+  <div class="sidebar-section">الأدوات</div>
+  <div class="nav-item" onclick="showView('reports')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    التقارير والتحليلات
+    <span class="nav-badge red">3</span>
+  </div>
+  <div class="nav-item" id="nav-accounts" onclick="showView('accounts')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    إدارة الحسابات
+  </div>
+  <div class="nav-item" id="nav-database" onclick="showView('database')" style="display:none;">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    قاعدة البيانات
+  </div>
+  <div class="nav-item" onclick="showView('settings')">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    الإعدادات
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">م.أ</div>
+      <div>
+        <div class="user-name" id="session-user-name">م. أحمد السلمي</div>
+        <div class="user-role" id="session-user-role">معلم رياضيات</div>
+      </div>
+    </div>
+    <div style="padding:12px;border-top:1px solid var(--gray-100);">
+      <button class="tb-btn" onclick="logout()">تسجيل خروج</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content (same structure as original) -->
+  <main class="main">
+  <div class="topbar" id="topbar">
+    <button class="menu-toggle tb-btn" id="menu-toggle" aria-label="قائمة" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-title">لوحة التحكم <span class="topbar-sub">— الفصل الدراسي الأول</span></div>
+    <span id="today-date" style="font-size:12px;color:var(--gray-400);"></span>
+  </div>
+
+  <div class="content">
+    <!-- All view sections are kept identical to the original file body -->
+
+    <!-- Dashboard -->
+    <div class="view active" id="view-dashboard">
+      <div class="metrics-grid">
+        <div class="metric-card green">
+          <div class="metric-label">حاضرون اليوم</div>
+          <div class="metric-val" id="m-present">0</div>
+          <div class="metric-pct" id="m-present-pct">من 0 طالب</div>
+          <div class="metric-icon">✓</div>
+        </div>
+        <div class="metric-card red">
+          <div class="metric-label">غائبون اليوم</div>
+          <div class="metric-val" id="m-absent">0</div>
+          <div class="metric-pct" id="m-absent-pct">0%</div>
+          <div class="metric-icon">✗</div>
+        </div>
+        <div class="metric-card amber">
+          <div class="metric-label">متأخرون / مستأذنون</div>
+          <div class="metric-val" id="m-other">0</div>
+          <div class="metric-pct">غير ملتزمين</div>
+          <div class="metric-icon">⏱</div>
+        </div>
+        <div class="metric-card blue">
+          <div class="metric-label">إجمالي الطلاب</div>
+          <div class="metric-val" id="m-total">0</div>
+          <div class="metric-pct" id="m-classes-count">في الفصل</div>
+          <div class="metric-icon">👥</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">نسبة الحضور — آخر 7 أيام</div>
+          </div>
+          <div class="card-body">
+            <div class="bar-chart" id="week-chart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">توزيع الحالات</div></div>
+          <div class="card-body">
+            <div class="donut-wrap">
+              <svg class="donut-svg" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gray-100)" stroke-width="18"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--primary)" stroke-width="18" stroke-dasharray="314" stroke-dashoffset="314" id="donut-present" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .8s ease;"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--red)" stroke-width="18" stroke-dasharray="314" stroke-dashoffset="314" id="donut-absent" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .8s ease;"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--amber)" stroke-width="18" stroke-dasharray="314" stroke-dashoffset="314" id="donut-other" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .8s ease;"/>
+                <text x="60" y="58" text-anchor="middle" font-size="16" font-weight="700" font-family="Cairo" fill="var(--gray-800)" id="donut-center-val">0%</text>
+                <text x="60" y="72" text-anchor="middle" font-size="9" font-family="Cairo" fill="var(--gray-400)">حضور</text>
+              </svg>
+            </div>
+            <div class="donut-labels">
+              <div class="dl-row"><div class="dl-dot" style="background:var(--primary)"></div><span class="dl-name">حاضر</span><span class="dl-val" id="dl-present">0</span></div>
+              <div class="dl-row"><div class="dl-dot" style="background:var(--red)"></div><span class="dl-name">غائب</span><span class="dl-val" id="dl-absent">0</span></div>
+              <div class="dl-row"><div class="dl-dot" style="background:var(--amber)"></div><span class="dl-name">متأخر / مستأذن</span><span class="dl-val" id="dl-other">0</span></div>
+              <div class="dl-row"><div class="dl-dot" style="background:var(--gray-300)"></div><span class="dl-name">غير محدد</span><span class="dl-val" id="dl-none">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header"><div class="card-title">آخر النشاطات</div></div>
+        <div class="card-body" id="activity-list">
+          <div style="text-align:center;color:var(--gray-400);padding:20px;font-size:13px;">لا توجد نشاطات بعد — ابدأ بتسجيل الحضور</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="view" id="view-attendance">
+      <div class="att-toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="ابحث بالاسم أو الرقم..." id="att-search" oninput="renderStudents()">
+        </div>
+        <div class="filter-tabs" id="filter-tabs">
+          <button class="ftab active" onclick="setFilter('all',this)">الكل</button>
+          <button class="ftab" onclick="setFilter('present',this)">حاضر</button>
+          <button class="ftab" onclick="setFilter('absent',this)">غائب</button>
+          <button class="ftab" onclick="setFilter('late',this)">متأخر</button>
+          <button class="ftab" onclick="setFilter('none',this)">غير محدد</button>
+        </div>
+        <button class="tb-btn" onclick="toggleGameMenu()" style="background:#fff;border-color:var(--gray-300);">🎲 عشوائي</button>
+        <button class="tb-btn" onclick="openModal('addStudent')">+ إضافة طالب</button>
+        <button class="tb-btn" onclick="markAll('present')" title="تحضير الكل">✓ تحضير الكل</button>
+        <button class="tb-btn" onclick="clearAll()">↺ مسح الكل</button>
+        <button class="tb-btn primary" onclick="saveAttendance()">💾 حفظ</button>
+      </div>
+
+      <div class="game-launcher" id="game-launcher" style="display:none;">
+        <div class="game-card" onclick="openGameModal('wheel')">
+          <div class="game-icon">🎡</div>
+          <div class="game-title">العجلة الدوارة</div>
+          <div class="game-desc">دور العجلة لاختيار طالب محظوظ.</div>
+        </div>
+        <div class="game-card" onclick="openGameModal('treasure')">
+          <div class="game-icon">💎</div>
+          <div class="game-title">بطاقة الكنز</div>
+          <div class="game-desc">اكشط واكتشف الطالب الذي يحمل الجائزة.</div>
+        </div>
+        <div class="game-card" onclick="openGameModal('scratch')">
+          <div class="game-icon">🪪</div>
+          <div class="game-title">بطاقة الخدش</div>
+          <div class="game-desc">اكشط البطاقة لعرض اسم الطالب سرياً.</div>
+        </div>
+        <div class="game-card" onclick="openGameModal('quick')">
+          <div class="game-icon">🎲</div>
+          <div class="game-title">السحب السريع</div>
+          <div class="game-desc">اختيار فوري بسحب الحظ السريع.</div>
+        </div>
+        <div class="game-card" onclick="openGameModal('train')">
+          <div class="game-icon">🚆</div>
+          <div class="game-title">القطار السريع</div>
+          <div class="game-desc">اختر مجموعة طلاب بسرعة القطار.</div>
+        </div>
+      </div>
+
+      <div class="att-stats">
+        <div class="att-stat as-present" id="as-present" onclick="setFilter('present',null,'present')">
+          <div class="att-stat-num" id="as-n-present">0</div><div class="att-stat-lbl">حاضر</div>
+        </div>
+        <div class="att-stat as-absent" id="as-absent" onclick="setFilter('absent',null,'absent')">
+          <div class="att-stat-num" id="as-n-absent">0</div><div class="att-stat-lbl">غائب</div>
+        </div>
+        <div class="att-stat as-late" id="as-late" onclick="setFilter('late',null,'late')">
+          <div class="att-stat-num" id="as-n-late">0</div><div class="att-stat-lbl">متأخر</div>
+        </div>
+        <div class="att-stat as-excused" id="as-excused" onclick="setFilter('excused',null,'excused')">
+          <div class="att-stat-num" id="as-n-excused">0</div><div class="att-stat-lbl">مستأذن</div>
+        </div>
+        <div class="att-stat as-remote" id="as-remote" onclick="setFilter('remote',null,'remote')">
+          <div class="att-stat-num" id="as-n-remote">0</div><div class="att-stat-lbl">عن بعد</div>
+        </div>
+      </div>
+
+      <div id="bulk-bar-container"></div>
+
+      <div class="students-grid-wrap">
+        <div class="students-grid" id="students-grid"></div>
+      </div>
+
+      <div class="progress-bar-wrap" style="margin-top:12px;">
+        <div class="progress-bar" id="att-progress" style="width:0%"></div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:6px;" id="att-progress-label">0 من 0 طالب تم تسجيلهم</div>
+    </div>
+
+    <!-- Grades -->
+    <div class="view" id="view-grades">
+      <div class="grades-header">
+        <select class="grade-select" id="grade-subject">
+          <option>الرياضيات</option>
+          <option>العلوم</option>
+          <option>اللغة العربية</option>
+          <option>اللغة الإنجليزية</option>
+          <option>الفيزياء</option>
+        </select>
+        <select class="grade-select" id="grade-term">
+          <option>الفصل الأول</option>
+          <option>الفصل الثاني</option>
+          <option>الفصل الثالث</option>
+        </select>
+        <button class="tb-btn primary" onclick="saveGrades()">💾 حفظ الدرجات</button>
+        <button class="tb-btn" onclick="exportGrades()">📊 تصدير Excel</button>
+      </div>
+      <div class="grades-table-wrap">
+        <table class="grades-table" id="grades-table">
+          <thead>
+            <tr>
+              <th>#</th><th>اسم الطالب</th>
+              <th>الواجب <small style="color:var(--gray-400)">/10</small></th>
+              <th>المشاركة <small style="color:var(--gray-400)">/10</small></th>
+              <th>الاختبار <small style="color:var(--gray-400)">/30</small></th>
+              <th>النشاط <small style="color:var(--gray-400)">/10</small></th>
+              <th>المجموع <small style="color:var(--gray-400)">/60</small></th>
+              <th>المستوى</th>
+            </tr>
+          </thead>
+          <tbody id="grades-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Classes -->
+    <div class="view" id="view-classes">
+      <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--gray-900);">فصولك الدراسية</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">إدارة الفصول وقوائم الطلاب</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="tb-btn" id="random-launch-btn-classes" onclick="toggleGameMenu()" style="background:#fff;border-color:var(--gray-300);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-left:6px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            عشوائي
+          </button>
+          <button class="tb-btn primary" onclick="openModal('addStudent')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-left:6px;"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12.5 11a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6"/></svg>
+            إضافة طالب
+          </button>
+        </div>
+      </div>
+      <div class="classes-grid" id="classes-grid"></div>
+    </div>
+
+    <!-- Reports -->
+    <div class="view" id="view-reports">
+      <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--gray-900);">التقارير المتقدمة للطباعة</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">قم بمعاينة التقرير وتصديره بصيغة PDF أو Word</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="tb-btn" onclick="window.print()" style="color:#0f172a;border-color:#cbd5e1;background:#f8fafc;">🖨️ طباعة مباشرة</button>
+          <button class="tb-btn" onclick="window.Export.downloadReportExcel()" style="color:#059669;border-color:#a7f3d0;background:#ecfdf5;">📊 تصدير Excel</button>
+          <button class="tb-btn" onclick="window.Export.downloadReportWord()" style="color:#2563eb;border-color:#bfdbfe;background:#eff6ff;">📄 تحميل Word</button>
+          <button class="tb-btn primary" onclick="window.Export.downloadReportPDF()">📕 تحميل PDF</button>
+        </div>
+      </div>
+      <div class="report-center">
+        <!-- Sidebar -->
+        <div class="report-sidebar">
+          <div class="rs-item active" onclick="loadReportPreview('attendance', this)"><span class="rs-icon ri-green">📋</span> تقرير الحضور الشهري</div>
+          <div class="rs-item" onclick="loadReportPreview('grades', this)"><span class="rs-icon ri-blue">📊</span> كشف الدرجات الشامل</div>
+          <div class="rs-item" onclick="loadReportPreview('absences', this)"><span class="rs-icon ri-red">⚠️</span> إشعار تحذير غياب</div>
+          <div class="rs-item" onclick="loadReportPreview('class_level', this)"><span class="rs-icon ri-amber">🏆</span> ملخص أداء الفصل</div>
+        </div>
+        <!-- Preview Pane -->
+        <div class="report-preview-pane">
+           <!-- Filters Bar -->
+           <div class="report-filters" style="background:var(--gray-900);padding:12px 18px;border-radius:12px;margin-bottom:20px;display:flex;align-items:center;gap:15px;flex-wrap:wrap;color:#fff;width:100%;max-width:21cm;flex-shrink:0;">
+              <div style="flex:1;display:flex;align-items:center;gap:10px;">
+                <label style="font-size:13px;font-weight:700;">الصف:</label>
+                <select id="report-filter-grade" class="form-input" style="width:140px;background:#fff;color:#000;padding:6px;border:none;min-height:36px;" onchange="TriggerReportUpdate()">
+                  <option value="all">الجميع</option>
+                  <option value="أول متوسط">أول متوسط</option>
+                  <option value="ثاني متوسط">ثاني متوسط</option>
+                  <option value="ثالث متوسط">ثالث متوسط</option>
+                </select>
+                
+                <label style="font-size:13px;font-weight:700;">الفصل:</label>
+                <select id="report-filter-class" class="form-input" style="width:100px;background:#fff;color:#000;padding:6px;border:none;min-height:36px;" onchange="TriggerReportUpdate()">
+                  <option value="all">الجميع</option>
+                  <option value="أ">فصل أ</option>
+                  <option value="ب">فصل ب</option>
+                  <option value="ج">فصل ج</option>
+                </select>
+              </div>
+              <button class="tb-btn primary" onclick="TriggerReportUpdate()" style="min-height:36px;">🔄 تحديث العرض</button>
+           </div>
+           
+           <!-- Multi-Page Print Wrapper -->
+           <div class="a4-wrapper" id="a4-print-area" style="background:transparent;box-shadow:none;border:none;">
+             <!-- Pages injected dynamically -->
+           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accounts -->
+    <div class="view" id="view-accounts">
+      <div style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--gray-900);">إدارة الفروع والحسابات</div>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">إدارة الفروع المدرسية، الصلاحيات، والمستخدمين.</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="tb-btn" onclick="openModal('addBranch')">+ إضافة فرع</button>
+          <button class="tb-btn primary" onclick="openModal('addAccount')">+ إضافة مستخدم</button>
+        </div>
+      </div>
+      
+      <!-- Branches Grid -->
+      <div style="margin-bottom:12px;font-weight:700;font-size:15px;">الفروع (اختر فرعاً لعرض مستخدميه)</div>
+      <div id="branches-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px;">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Account Metrics -->
+      <div class="metrics-grid" style="margin-bottom:20px;display:none;" id="acc-metrics">
+        <div class="metric-card">
+          <div class="mline"><div class="m-icon" style="background:#eff6ff;color:#3b82f6"><svg width="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><div class="m-val" id="acc-total">0</div></div>
+          <div class="m-title">إجمالي المستخدمين</div>
+        </div>
+        <div class="metric-card">
+          <div class="mline"><div class="m-icon" style="background:#fef2f2;color:#ef4444"><svg width="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="m-val" id="acc-admins">0</div></div>
+          <div class="m-title">مسؤولي النظام والمدراء</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:center;">
+        <span id="current-branch-title">جميع المستخدمين في (الفرع الرئيسي)</span>
+      </div>
+
+      <!-- Accounts Table -->
+      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow:hidden;border:1px solid var(--gray-200);">
+        <div style="overflow-x:auto;">
+          <table class="grades-table" id="accounts-table" style="min-width:700px;">
+            <thead>
+              <tr>
+                <th style="padding:15px">الحساب / المستخدم</th>
+                <th>الفرع</th>
+                <th>الصلاحية</th>
+                <th>خطة الاشتراك</th>
+                <th>تاريخ الإنشاء</th>
+                <th>الحالة</th>
+                <th style="text-align:left">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="accounts-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database (Admin Only) -->
+    <div class="view" id="view-database">
+      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--gray-900);">🗄️ قاعدة البيانات السحابية</div>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">إدارة الاتصال بـ Supabase ومراقبة المساحة التخزينية</div>
+        </div>
+        <span id="db-status-badge" style="font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;background:#fef2f2;color:#ef4444;">● غير متصل</span>
+      </div>
+
+      <div class="settings-grid">
+        <!-- حالة الاتصال -->
+        <div class="setting-card" style="grid-column: 1 / -1;">
+          <div class="setting-header">إشارة الاتصال</div>
+          <div class="setting-body">
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--gray-50);border-radius:12px;border:1px solid var(--gray-200);" id="db-status-bar">
+              <div id="db-status-dot" style="width:14px;height:14px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 8px #ef444480;animation:pulse 2s infinite;"></div>
+              <div style="flex:1;">
+                <div id="db-status-text" style="font-size:14px;font-weight:700;color:var(--gray-800);">غير متصل بقاعدة البيانات</div>
+                <div id="db-status-sub" style="font-size:11px;color:var(--gray-400);margin-top:3px;">يرجى التأكد من بيانات الربط أدناه</div>
+              </div>
+              <button class="tb-btn primary" onclick="testSupabaseConnection()" style="font-size:12px;white-space:nowrap;">🔄 اختبار الاتصال</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- بيانات الربط -->
+        <div class="setting-card">
+          <div class="setting-header">🔗 بيانات الربط</div>
+          <div class="setting-body">
+            <div class="form-group"><label class="form-label">رابط المشروع (Project URL)</label><input class="form-input" id="db-url" value="https://ddmdzcqlhqkljcnhfefr.supabase.co" style="font-family:monospace;font-size:12px;direction:ltr;text-align:left;"></div>
+            <div class="form-group"><label class="form-label">المفتاح العام (Anon Key)</label><input class="form-input" id="db-key" value="sb_publishable_iaZzAaHFwo9loN5IzHCHCA_htSKFzt3" type="password" style="font-family:monospace;font-size:12px;direction:ltr;text-align:left;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="tb-btn" onclick="document.getElementById('db-key').type = document.getElementById('db-key').type==='password'?'text':'password'" style="font-size:12px;">👁 إظهار/إخفاء</button>
+              <button class="tb-btn" onclick="saveDbSettings()" style="font-size:12px;background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);">💾 حفظ البيانات</button>
+            </div>
+                <div id="db-storage-bar" style="width:0%;height:100%;background:linear-gradient(90deg,var(--primary),#34d399);border-radius:10px;transition:width 0.8s ease;"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;">
+                <div style="text-align:center;">
+                  <div id="db-count-students" style="font-size:18px;font-weight:800;color:var(--primary-dark);">--</div>
+                  <div style="font-size:10px;color:var(--gray-500);">طالب</div>
+                </div>
+                <div style="text-align:center;">
+                  <div id="db-count-accounts" style="font-size:18px;font-weight:800;color:var(--blue);">--</div>
+                  <div style="font-size:10px;color:var(--gray-500);">حساب</div>
+                </div>
+                <div style="text-align:center;">
+                  <div id="db-count-attendance" style="font-size:18px;font-weight:800;color:var(--amber);">--</div>
+                  <div style="font-size:10px;color:var(--gray-500);">سجل حضور</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ═══ نهاية بطاقة قاعدة البيانات ═══ -->
+        <div class="setting-card">
+          <div class="setting-header">⚙️ إعدادات المعلم</div>
+          <div class="setting-body">
+            <div class="form-group"><label class="form-label">الاسم</label><input class="form-input" value="م. أحمد السلمي"></div>
+            <div class="form-group"><label class="form-label">المادة الافتراضية</label>
+              <select class="form-input"><option>الرياضيات</option><option>العلوم</option><option>اللغة العربية</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">المرحلة الدراسية</label>
+              <select class="form-input"><option>ابتدائي</option><option selected>متوسط</option><option>ثانوي</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card" id="banner-settings-card">
+          <div class="setting-header">🖼️ إدارة إعلانات شاشة الدخول</div>
+          <div class="setting-body">
+            <div style="margin-bottom:10px;font-size:13px;color:var(--gray-600);">
+              أضف أو عدّل البنرات الترحيبية ورسائل الدعم الفني التي تظهر للزوار في شاشة تسجيل الدخول.
+            </div>
+            <div id="banners-list" style="min-height:90px;padding:10px 0;border-top:1px solid var(--gray-100); display:flex; flex-direction:column; gap:8px;">
+              <!-- Banners rendered here -->
+            </div>
+            <button class="tb-btn primary" onclick="renderAddBannerForm()" style="width:100%;justify-content:center;margin-top:10px;">
+              + إضافة إعلان جديد
+            </button>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-header">🔔 الإشعارات</div>
+          <div class="setting-body">
+            <div class="setting-row"><div class="setting-label">تنبيه الغياب المتكرر<span class="setting-sub">عند تجاوز 3 أيام</span></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><div class="setting-label">تذكير بدء الكشف<span class="setting-sub">عند بداية كل حصة</span></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><div class="setting-label">تقرير أسبوعي<span class="setting-sub">كل يوم أحد</span></div><label class="toggle"><input type="checkbox"><span class="slider"></span></label></div>
+            <div class="setting-row"><div class="setting-label">صوت عند الحفظ</div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-header">🎨 التخصيص</div>
+          <div class="setting-body">
+            <div class="setting-row"><div class="setting-label">الوضع الليلي</div><label class="toggle"><input type="checkbox"><span class="slider"></span></label></div>
+            <div class="setting-row"><div class="setting-label">عرض الأرقام التسلسلية</div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><div class="setting-label">حفظ تلقائي<span class="setting-sub">كل 5 دقائق</span></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-header">📊 إعدادات الدرجات</div>
+          <div class="setting-body">
+            <div class="form-group"><label class="form-label">درجة الواجب</label><input class="form-input" type="number" value="10" min="0" max="100"></div>
+            <div class="form-group"><label class="form-label">درجة المشاركة</label><input class="form-input" type="number" value="10" min="0" max="100"></div>
+            <div class="form-group"><label class="form-label">درجة الاختبار</label><input class="form-input" type="number" value="30" min="0" max="100"></div>
+            <div class="form-group"><label class="form-label">درجة النشاط</label><input class="form-input" type="number" value="10" min="0" max="100"></div>
+            <button class="tb-btn primary" onclick="showToast('تم حفظ الإعدادات','success')" style="width:100%;justify-content:center;">حفظ الإعدادات</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Add Student Modal -->
+<div class="modal-overlay" id="modal-addStudent">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">إضافة طالب / مجموعة طلاب</div>
+      <button class="modal-close" onclick="closeModal('addStudent')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <button class="ftab active" id="tab-single" onclick="toggleStudentMode('single')">طالب واحد</button>
+        <button class="ftab" id="tab-multi" onclick="toggleStudentMode('multi')">مجموعة طلاب (لصق)</button>
+      </div>
+      
+      <div id="add-student-single">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">الاسم الأول</label><input class="form-input" id="new-fname" placeholder="مثال: أحمد"></div>
+          <div class="form-group"><label class="form-label">اسم العائلة</label><input class="form-input" id="new-lname" placeholder="مثال: المالكي"></div>
+        </div>
+        <div class="form-group"><label class="form-label">رقم الطالب</label><input class="form-input" id="new-num" placeholder="يُملأ تلقائياً" readonly style="background:var(--gray-50);"></div>
+      </div>
+      
+      <div id="add-student-multi" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">صق أسماء الطلاب (اسم في كل سطر)</label>
+          <textarea class="form-input" id="new-students-list" style="height:120px;resize:vertical;" placeholder="أحمد المالكي&#10;خالد الشمري&#10;فهد الزهراني"></textarea>
+        </div>
+      </div>
+
+      <div class="form-group"><label class="form-label">الفصل</label>
+        <select class="form-input" id="new-class"><option>الثالث متوسط — أ</option><option>الثالث متوسط — ب</option><option>الثالث متوسط — ج</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('addStudent')">إلغاء</button>
+      <button class="tb-btn primary" onclick="addStudent()">حفظ وإضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Account Modal -->
+<div class="modal-overlay" id="modal-addAccount">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">إضافة حساب جديد</div>
+      <button class="modal-close" onclick="closeModal('addAccount')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">اسم المستخدم</label><input class="form-input" id="account-username" placeholder="مثال: teacher1"></div>
+      <div class="form-group"><label class="form-label">كلمة المرور</label><input class="form-input" id="account-password" type="password" placeholder="كلمة المرور"></div>
+      <div class="form-group"><label class="form-label">الاسم الكامل</label><input class="form-input" id="account-name" placeholder="مثال: أ. سارة"></div>
+      <div class="form-group"><label class="form-label">الدور</label>
+        <select class="form-input" id="account-role" onchange="updateAccountRolePermissions()">
+          <option value="teacher">معلم</option>
+          <option value="supervisor">مشرف</option>
+          <option value="school_manager">مدير مدرسة</option>
+          <option value="admin">مسؤول النظام</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">عدد الفصول</label><input class="form-input" id="account-classes" type="number" min="0" value="0"></div>
+        <div class="form-group"><label class="form-label">عدد الطلاب</label><input class="form-input" id="account-students" type="number" min="0" value="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">صلاحيات الحساب</label><div id="account-permissions" style="min-height:70px;padding:10px;border:1px solid var(--gray-200);border-radius:8px;background:#fff;font-size:13px;color:var(--gray-700);"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('addAccount')">إلغاء</button>
+      <button class="tb-btn primary" onclick="addAccount()">إضافة الحساب</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Modal -->
+<div class="modal-overlay game-modal" id="modal-game" data-game="">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="game-title">اللعبة العشوائية</div>
+      <button class="modal-close" onclick="closeModal('modal-game')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--gray-600);" id="game-desc">اختر لعبة من الأعلى ثم اضغط ابدأ.</div>
+      <div class="game-screen" id="game-screen"></div>
+      <div class="game-result" id="game-result">🎯 مستعد لاختيار الطالب؟</div>
+    </div>
+    <div class="modal-footer game-actions">
+      <button class="tb-btn" onclick="closeModal('modal-game')">إغلاق</button>
+      <button class="tb-btn primary" id="game-action" onclick="playGame()">ابدأ اللعبة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div class="modal-overlay" id="modal-student">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">تفاصيل الطالب</div>
+      <button class="modal-close" onclick="closeStudentModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px" id="stu-name">اسم الطالب</div>
+          <div style="font-size:12px;color:var(--gray-500)">الرقم: <span id="stu-num"></span> · الفصل: <span id="stu-class"></span></div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:12px;color:var(--gray-400)">نقاط</div>
+          <div style="font-weight:700;font-size:18px" id="stu-points">0</div>
+        </div>
+      </div>
+
+      <div class="form-group"><label class="form-label">الدرجات</label><div class="form-input" id="stu-grades"></div></div>
+
+      <div class="form-group"><label class="form-label">التحذيرات</label><div id="stu-warnings" style="min-height:40px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;background:#fff"></div></div>
+
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input id="new-warning" class="form-input" placeholder="نص التحذير الجديد">
+        <button class="tb-btn" onclick="addWarning()">أضف تحذير</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <input id="add-points" class="form-input" type="number" placeholder="نقاط(+)">
+        <button class="tb-btn" onclick="addPoints()">أضف نقاط</button>
+        <div style="flex:1"></div>
+      </div>
+
+      <div class="form-group"><label class="form-label">الأوسمة</label><div id="stu-badges" style="min-height:30px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;background:#fff"></div></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;"><input id="new-badge" class="form-input" placeholder="اسم الوسام"><button class="tb-btn" onclick="addBadge()">أضف وسام</button></div>
+
+      <div class="form-group"><label class="form-label">الدور في الفصل</label>
+        <div style="display:flex;gap:8px;align-items:center"><input id="set-role" class="form-input" placeholder="مثال: عريف"><button class="tb-btn" onclick="setRole()">تعين</button></div>
+        <div style="margin-top:8px;color:var(--gray-600)">الدور الحالي: <span id="stu-role">بدون دور</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeStudentModal()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Account Modal -->
+<div class="modal-overlay" id="modal-addAccount">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:700;">إضافة مستخدم جديد</h3>
+      <button class="modal-close" onclick="closeModal('addAccount')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">الاسم الكامل</label>
+        <input type="text" class="form-input" id="new-acc-name" placeholder="مثال: أ. خالد المحمدي">
+      </div>
+      <div class="form-group">
+        <label class="form-label">اسم المستخدم (للتسجيل)</label>
+        <input type="text" class="form-input" id="new-acc-user" placeholder="مثال: khaled_99" style="direction:ltr;text-align:right">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الفرع</label>
+        <select class="form-input" id="new-acc-branch">
+          <option value="1">الفرع الرئيسي</option>
+          <option value="2">فرع الشمال</option>
+          <option value="3">فرع الجنوب</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الصلاحية</label>
+        <select class="form-input" id="new-acc-role">
+          <option value="super_admin">مدير النظام (صلاحيات كاملة)</option>
+          <option value="school_admin">مدير مدرسة</option>
+          <option value="branch_manager">مدير فرع</option>
+          <option value="accountant">محاسب</option>
+          <option value="staff">موظف (صلاحيات محدودة)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">خطة الاشتراك</label>
+        <select class="form-input" id="new-acc-plan">
+          <option value="free">مجانية (2 مستخدمين)</option>
+          <option value="bronze">برونزية (10 مستخدمين)</option>
+          <option value="gold">ذهبية (50 مستخدم)</option>
+          <option value="enterprise">مؤسسية (غير محدود)</option>
+        </select>
+      </div>
+      <button class="tb-btn primary" style="width:100%;justify-content:center;margin-top:20px;padding:12px;font-size:15px;" onclick="submitAddAccount()">إنشاء الحساب</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal-overlay" id="modal-addClass">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:700;">إضافة فصل جديد</h3>
+      <button class="modal-close" onclick="closeModal('addClass')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">اسم الفرع / الفصل</label>
+        <input type="text" class="form-input" id="new-class-name" placeholder="مثال: د">
+      </div>
+      <button class="tb-btn primary" style="width:100%;justify-content:center;margin-top:20px;padding:12px;font-size:15px;" onclick="addClass()">إنشاء الفصل</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Branch Modal -->
+<div class="modal-overlay" id="modal-addBranch">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:700;">إضافة فرع جديد</h3>
+      <button class="modal-close" onclick="closeModal('addBranch')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">اسم الفرع</label>
+        <input type="text" class="form-input" id="new-branch-name" placeholder="مثال: فرع الشرقية">
+      </div>
+      <button class="tb-btn primary" style="width:100%;justify-content:center;margin-top:20px;padding:12px;font-size:15px;" onclick="submitAddBranch()">إضافة الفرع</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/db-connector.js"></script>
+<script src="js/games.js"></script>
+<script src="js/export.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
